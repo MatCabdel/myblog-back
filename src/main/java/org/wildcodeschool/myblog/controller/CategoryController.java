@@ -7,6 +7,7 @@ import org.wildcodeschool.myblog.dto.ArticleDTO;
 import org.wildcodeschool.myblog.dto.CategoryDTO;
 import org.wildcodeschool.myblog.model.Category;
 import org.wildcodeschool.myblog.repository.CategoryRepository;
+import org.wildcodeschool.myblog.service.CategoryService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,74 +16,37 @@ import java.util.stream.Collectors;
 @RequestMapping("/categories")
 public class CategoryController {
 
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
-    public CategoryController(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
     }
 
     @GetMapping
     public ResponseEntity<List<CategoryDTO>> getAllCategories() {
-        List<Category> categories = categoryRepository.findAll();
-        if (categories.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        List<CategoryDTO> categoryDTOs = categories.stream().map(this::convertToDTO).collect(Collectors.toList());
-        return ResponseEntity.ok(categoryDTOs);
+        List<CategoryDTO> categories = categoryService.getAllCategories();
+        return categories.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(categories);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long id) {
-        Category category = categoryRepository.findById(id).orElse(null);
-        if (category == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(convertToDTO(category));
+        CategoryDTO category = categoryService.getCategoryById(id);
+        return category == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(category);
     }
 
     @PostMapping
     public ResponseEntity<CategoryDTO> createCategory(@RequestBody Category category) {
-        Category savedCategory = categoryRepository.save(category);
-        return ResponseEntity.status(201).body(convertToDTO(savedCategory));
+        return ResponseEntity.status(201).body(categoryService.createCategory(category));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id, @RequestBody Category categoryDetails) {
-        Category category = categoryRepository.findById(id).orElse(null);
-        if (category == null) {
-            return ResponseEntity.notFound().build();
-        }
-        category.setName(categoryDetails.getName());
-        Category updatedCategory = categoryRepository.save(category);
-        return ResponseEntity.ok(convertToDTO(updatedCategory));
+        CategoryDTO updatedCategory = categoryService.updateCategory(id, categoryDetails);
+        return updatedCategory == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(updatedCategory);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        Category category = categoryRepository.findById(id).orElse(null);
-        if (category == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        categoryRepository.delete(category);
-        return ResponseEntity.noContent().build();
-    }
-
-    private CategoryDTO convertToDTO(Category category) {
-        CategoryDTO categoryDTO = new CategoryDTO();
-        categoryDTO.setId(category.getId());
-        categoryDTO.setName(category.getName());
-        if(category.getArticles() != null) {
-            categoryDTO.setArticles(category.getArticles().stream().map(article -> {
-                ArticleDTO articleDTO = new ArticleDTO();
-                articleDTO.setId(article.getId());
-                articleDTO.setTitle(article.getTitle());
-                articleDTO.setContent(article.getContent());
-                articleDTO.setUpdatedAt(article.getUpdatedAt());
-                articleDTO.setCategoryName(article.getCategory().getName());
-                return articleDTO;
-            }).collect(Collectors.toList()));
-        }
-        return categoryDTO;
+        return categoryService.deleteCategory(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 }
