@@ -2,9 +2,13 @@ package org.wildcodeschool.myblog.service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.wildcodeschool.myblog.dto.ArticleDTO;
+import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
+import org.wildcodeschool.myblog.model.Article;
 import org.wildcodeschool.myblog.model.User;
 import org.wildcodeschool.myblog.repository.UserRepository;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -28,5 +32,9 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(password));
         user.setRoles(roles);
         return userRepository.save(user);
+    }
+
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
     }
 }

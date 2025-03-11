@@ -29,6 +29,8 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll() // Permettre l'accès public aux endpoints sous /auth/
+                        .requestMatchers("/admin/**").hasRole("ADMIN") // Accessible uniquement aux administrateurs
+                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated() // Tous les autres endpoints nécessitent une authentification
                 )
                 .userDetailsService(customUserDetailsService)
